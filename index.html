@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Coin Uz 2.0</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:linear-gradient(160deg,#101828,#1d2939);color:#fff;min-height:100vh}
+.app{max-width:480px;margin:auto;padding:22px 18px 34px;text-align:center}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+h1{margin:0;font-size:30px}.user{opacity:.72;font-size:14px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:18px;margin:12px 0}
+.balance{font-size:42px;font-weight:800;margin:8px}.muted{opacity:.7;font-size:14px}
+.coin{width:210px;height:210px;border-radius:50%;margin:25px auto;display:flex;align-items:center;justify-content:center;font-size:82px;cursor:pointer;user-select:none;background:linear-gradient(145deg,#ffd86b,#f5a623);box-shadow:0 14px 0 #b96e12,0 18px 35px rgba(0,0,0,.35);transition:.08s}
+.coin:active{transform:translateY(10px);box-shadow:0 4px 0 #b96e12,0 8px 15px rgba(0,0,0,.25)}
+button{width:100%;border:0;border-radius:14px;padding:14px;margin-top:10px;font-size:16px;font-weight:700;background:#fff;color:#101828}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.stat{font-size:20px;font-weight:700;margin-top:5px}
+.small{font-size:13px;opacity:.7;margin-top:7px}
+#toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#fff;color:#111;padding:10px 16px;border-radius:20px;display:none;z-index:5}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.62);display:none;align-items:flex-end;justify-content:center;z-index:4}
+.sheet{width:min(480px,100%);background:#172235;border-radius:24px 24px 0 0;padding:20px 18px 28px;text-align:left}
+.sheet h2{margin:0 0 12px}.rank{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.08)}
+.close{background:rgba(255,255,255,.12);color:#fff}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top"><h1>🪙 Coin Uz</h1><span class="user" id="user">Mehmon</span></div>
+
+  <div class="card">
+    <div class="muted">Sizning balansingiz</div>
+    <div class="balance" id="balance">0</div>
+    <div class="muted">coin</div>
+  </div>
+
+  <div class="coin" id="coin">🪙</div>
+  <div class="muted">Coin yig‘ish uchun bosing!</div>
+
+  <div class="card row">
+    <div><div class="muted">Bugun</div><div class="stat" id="today">0</div></div>
+    <div><div class="muted">Jami bosish</div><div class="stat" id="clicks">0</div></div>
+  </div>
+
+  <button id="bonus">🎁 Kunlik bonus +100</button>
+  <button id="ref">👥 Do‘st taklif qilish</button>
+  <button id="rating">🏆 TOP reyting</button>
+  <div class="small">Coin Uz 2.0 • demo saqlash: shu qurilmada</div>
+</div>
+
+<div id="toast"></div>
+
+<div class="modal" id="modal">
+  <div class="sheet">
+    <h2>🏆 Coin Uz TOP</h2>
+    <div id="ranks"></div>
+    <button class="close" id="close">Yopish</button>
+  </div>
+</div>
+
+<script>
+const KEY="coinuz_v2";
+const tg=window.Telegram?.WebApp;
+const tgUser=tg?.initDataUnsafe?.user;
+if(tg){tg.ready();tg.expand();}
+const userName=tgUser?.first_name || "Foydalanuvchi";
+const userId=tgUser?.id || ("guest_"+Math.random().toString(36).slice(2));
+
+let data=JSON.parse(localStorage.getItem(KEY)||'{"balance":0,"clicks":0,"today":0,"bonusDate":"","referrals":0}');
+const todayKey=new Date().toISOString().slice(0,10);
+if(data.dayKey!==todayKey){data.today=0;data.dayKey=todayKey;localStorage.setItem(KEY,JSON.stringify(data));}
+
+const $=id=>document.getElementById(id);
+$("user").textContent=userName;
+
+function save(){localStorage.setItem(KEY,JSON.stringify(data));render();}
+function render(){
+ $("balance").textContent=data.balance.toLocaleString("uz-UZ");
+ $("clicks").textContent=data.clicks.toLocaleString("uz-UZ");
+ $("today").textContent=data.today.toLocaleString("uz-UZ");
+}
+function toast(t){
+ const x=$("toast");x.textContent=t;x.style.display="block";
+ clearTimeout(window._toast);window._toast=setTimeout(()=>x.style.display="none",1500);
+}
+
+$("coin").onclick=()=>{
+ data.balance++;data.clicks++;data.today++;save();
+};
+
+$("bonus").onclick=()=>{
+ if(data.bonusDate===todayKey)return toast("Bugungi bonusni oldingiz!");
+ data.balance+=100;data.bonusDate=todayKey;save();toast("+100 coin 🎉");
+};
+
+$("ref").onclick=()=>{
+ const link="https://t.me/Co1n_uz_bot?start=ref_"+userId;
+ const text="🪙 Coin Uz ga qo‘shiling! Men bilan birga coin yig‘ing:\n"+link;
+ if(tg?.openTelegramLink){
+   tg.openTelegramLink("https://t.me/share/url?url="+encodeURIComponent(link)+"&text="+encodeURIComponent("🪙 Coin Uz ga qo‘shiling!"));
+ }else if(navigator.share){
+   navigator.share({title:"Coin Uz",text,url:link}).catch(()=>{});
+ }else{
+   navigator.clipboard?.writeText(text);toast("Referral havola nusxalandi!");
+ }
+};
+
+$("rating").onclick=()=>{
+ const list=[
+   [userName,data.balance],
+   ["Ali",1250],["Sardor",980],["Madina",760],["Jasur",540]
+ ].sort((a,b)=>b[1]-a[1]);
+ $("ranks").innerHTML=list.map((x,i)=>`<div class="rank"><span>${i+1}. ${x[0]}</span><b>${x[1].toLocaleString("uz-UZ")} 🪙</b></div>`).join("");
+ $("modal").style.display="flex";
+};
+$("close").onclick=()=>$("modal").style.display="none";
+$("modal").onclick=e=>{if(e.target.id==="modal")$("modal").style.display="none"};
+
+render();
+</script>
+</body>
+</html>
