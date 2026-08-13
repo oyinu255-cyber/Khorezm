@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Coin Uz</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:linear-gradient(160deg,#101828,#1d2939);color:#fff;min-height:100vh}
+.app{max-width:480px;margin:auto;padding:22px 18px 30px;text-align:center}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+h1{margin:0;font-size:30px}.card{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:18px;margin:12px 0}
+.balance{font-size:42px;font-weight:800;margin:8px}.muted{opacity:.7;font-size:14px}
+.coin{width:210px;height:210px;border-radius:50%;margin:25px auto;display:flex;align-items:center;justify-content:center;font-size:82px;cursor:pointer;user-select:none;background:linear-gradient(145deg,#ffd86b,#f5a623);box-shadow:0 14px 0 #b96e12,0 18px 35px rgba(0,0,0,.35);transition:.08s}
+.coin:active{transform:translateY(10px);box-shadow:0 4px 0 #b96e12,0 8px 15px rgba(0,0,0,.25)}
+button{width:100%;border:0;border-radius:14px;padding:14px;margin-top:10px;font-size:16px;font-weight:700;background:#fff;color:#101828}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.stat{font-size:20px;font-weight:700;margin-top:5px}
+#toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#fff;color:#111;padding:10px 16px;border-radius:20px;display:none}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top"><h1>🪙 Coin Uz</h1><span class="muted" id="user">Mehmon</span></div>
+  <div class="card">
+    <div class="muted">Sizning balansingiz</div>
+    <div class="balance" id="balance">0</div>
+    <div class="muted">coin</div>
+  </div>
+  <div class="coin" id="coin">🪙</div>
+  <div class="muted">Coin yig‘ish uchun bosing!</div>
+  <div class="card row">
+    <div><div class="muted">Bugun</div><div class="stat" id="today">0</div></div>
+    <div><div class="muted">Jami bosish</div><div class="stat" id="clicks">0</div></div>
+  </div>
+  <button id="bonus">🎁 Kunlik bonus +100</button>
+  <button id="ref">👥 Do‘st taklif qilish</button>
+  <button id="rating">🏆 Reyting</button>
+</div>
+<div id="toast"></div>
+<script>
+const KEY="coinuz_demo";
+let data=JSON.parse(localStorage.getItem(KEY)||'{"balance":0,"clicks":0,"today":0,"bonusDate":""}');
+const tg=window.Telegram?.WebApp;
+if(tg){tg.ready();tg.expand(); document.getElementById("user").textContent=tg.initDataUnsafe?.user?.first_name||"Foydalanuvchi";}
+function save(){localStorage.setItem(KEY,JSON.stringify(data));render()}
+function render(){balance.textContent=data.balance.toLocaleString("uz-UZ");clicks.textContent=data.clicks.toLocaleString("uz-UZ");today.textContent=data.today.toLocaleString("uz-UZ")}
+function toast(t){const x=document.getElementById("toast");x.textContent=t;x.style.display="block";setTimeout(()=>x.style.display="none",1400)}
+coin.onclick=()=>{data.balance++;data.clicks++;data.today++;save()}
+bonus.onclick=()=>{
+ const d=new Date().toISOString().slice(0,10);
+ if(data.bonusDate===d) return toast("Bugungi bonusni oldingiz!");
+ data.balance+=100;data.bonusDate=d;save();toast("+100 coin 🎉")
+};
+ref.onclick=()=>{
+ const text="Coin Uz o‘yiniga qo‘shiling! 🪙";
+ if(navigator.share) navigator.share({text}); else {navigator.clipboard?.writeText(text);toast("Taklif matni nusxalandi")}
+};
+rating.onclick=()=>toast("Reyting tizimi keyingi versiyada ulanadi 🏆");
+render();
+</script>
+</body>
+</html>
